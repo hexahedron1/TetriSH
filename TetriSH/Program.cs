@@ -3,6 +3,7 @@
 using System.Net.Http.Json;
 using Newtonsoft.Json;
 using PopupLib;
+using TetriSH;
 
 string[] splashes = [
     "Fun!",
@@ -32,6 +33,7 @@ while (true) {
         case "main": {
             string select = SelectPopup.Quick(splash, [ "Run", "Settings", "Stats", "Quit" ], title: "TetriSH");
             switch (select) {
+                case "Run": menu = "tetris"; break;
                 case "Settings": menu = "settings"; break;
                 case "Quit": {
                     Console.CursorVisible = true;
@@ -52,6 +54,22 @@ while (true) {
                 }
                 case "Back": menu = "main"; break;
             }
+            break;
+        }
+        case "tetris": {
+            Console.Clear();
+            for (var i = 0; i < 7; i++) {
+                for (var j = 0; j < 4; j++) {
+                    for (var k = 0; k < 4; k++) {
+                        var off = TetrisEngine.tetrominoes[i, j, k];
+                        Console.ForegroundColor = off.Item1 == off.Item2 && off.Item1 == 0 ? ConsoleColor.Yellow : ConsoleColor.White;
+                        Console.SetCursorPosition(i*11 + 6 + off.Item1*2, j*6 + 3 + off.Item2);
+                        Console.Write("██");
+                    }
+                }
+            }
+            Console.ReadKey(true);
+            menu = "main";
             break;
         }
     }
