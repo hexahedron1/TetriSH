@@ -1,7 +1,5 @@
 ﻿// See https://aka.ms/new-console-template for more information
 
-using System.Net.Http.Json;
-using System.Security.Principal;
 using Newtonsoft.Json;
 using PopupLib;
 using TetriSH;
