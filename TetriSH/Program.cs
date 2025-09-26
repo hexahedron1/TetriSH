@@ -1,6 +1,7 @@
 ﻿// See https://aka.ms/new-console-template for more information
 
 using System.Net.Http.Json;
+using System.Security.Principal;
 using Newtonsoft.Json;
 using PopupLib;
 using TetriSH;
@@ -11,7 +12,14 @@ string[] splashes = [
     "So you have chosen, pain",
     "The least practical shell!",
     "...",
-    "Whose idea was this?"
+    "Whose idea was this?",
+    "Runs on 2 'AA' batteries",
+    "Is tetris copyrighted?",
+    "Tetrominoes!",
+    "So far not rewritten in Rust",
+    "Not suitable for Windows",
+    "Made with a keyboard",
+    "What's next, snake as a shell?"
 ];
 string splash = splashes[new Random().Next(splashes.Length)];
 string menu = "main"; // this is probably a dumb way of handling menus but i don't give a damn honestly
@@ -57,18 +65,8 @@ while (true) {
             break;
         }
         case "tetris": {
-            Console.Clear();
-            for (var i = 0; i < 7; i++) {
-                for (var j = 0; j < 4; j++) {
-                    for (var k = 0; k < 4; k++) {
-                        var off = TetrisEngine.tetrominoes[i, j, k];
-                        Console.ForegroundColor = off.Item1 == off.Item2 && off.Item1 == 0 ? ConsoleColor.Yellow : ConsoleColor.White;
-                        Console.SetCursorPosition(i*11 + 6 + off.Item1*2, j*6 + 3 + off.Item2);
-                        Console.Write("██");
-                    }
-                }
-            }
-            Console.ReadKey(true);
+            TetrisEngine tetris = new(32, 48);
+            tetris.Run();
             menu = "main";
             break;
         }
