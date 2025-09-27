@@ -36,15 +36,15 @@ public class TetrisEngine {
         },
         { // S
             { new(0, 0), new(1, 0), new(0, -1), new(-1, -1) },
-            { new(0, 0), new(-1, 0), new(-1, -1), new(0, 1) },
+            { new(0, 0), new(-1, 0), new(-1, 1), new(0, -1) },
             { new(0, 0), new(1, 0), new(0, -1), new(-1, -1) },
-            { new(0, 0), new(-1, 0), new(-1, -1), new(0, 1) }
+            { new(0, 0), new(-1, 0), new(-1, 1), new(0, -1) }
         },
         { // Z
             { new(0, 0), new(-1, 0), new(0, -1), new(1, -1) },
-            { new(0, 0), new(-1, 0), new(-1, 1), new(0, -1) },
+            { new(0, 0), new(-1, 0), new(-1, -1), new(0, 1) },
             { new(0, 0), new(-1, 0), new(0, -1), new(1, -1) },
-            { new(0, 0), new(-1, 0), new(-1, 1), new(0, -1) }
+            { new(0, 0), new(-1, 0), new(-1, -1), new(0, 1) },
         }
     };
 
@@ -91,7 +91,6 @@ public class TetrisEngine {
     private bool paused = false;
     
     void Refresh() {
-        Console.Clear();
         int x = Console.WindowWidth / 2 - Width;
         int y = Console.WindowHeight / 2 - Height / 2;
         Console.SetCursorPosition(x - 1, y - 2);
