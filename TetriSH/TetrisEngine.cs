@@ -70,7 +70,7 @@ public class TetrisEngine {
         Random rand = new Random();
         for (int i = 0; i < 4; i++)
             chars.Add(cpairs[rand.Next(cpairs.Count)]);
-        piece = new(Width / 2, 2, rand.Next(7), /*chars.ToArray()*/ "AA", "BB", "CC", "DD");
+        piece = new(Width / 2, 2, rand.Next(7), chars.ToArray());
         RefreshPieceRange();
     }
 
@@ -107,18 +107,18 @@ public class TetrisEngine {
         Console.Write($"╚{new string('═', Width*2)}╝░");
         Console.SetCursorPosition(x, Console.WindowHeight/2 + Height/2 + 2);
         Console.Write(new string('░', Width*2+2));
-        Console.BackgroundColor = ConsoleColor.Blue;
-        Console.ForegroundColor = ConsoleColor.Black;
-        for (int i = 0; i < 4; i++) {
-            var cell = tetrominoes[piece.Type, piece.Rotation, i];
-            Console.SetCursorPosition(x + piece.X*2 + cell.Item1*2, y + piece.Y + cell.Item2 + 1);
-            Console.Write(piece.Chars[i]);
-        }
-        Console.ResetColor();
         foreach (var block in Pile) {
             Console.SetCursorPosition(x + block.Item1*2, y + block.Item2);
             Console.Write(block.Item3);
         }
+        Console.BackgroundColor = CheckCollision() ? ConsoleColor.Red : ConsoleColor.Blue;
+        Console.ForegroundColor = ConsoleColor.Black;
+        for (int i = 0; i < 4; i++) {
+            var cell = tetrominoes[piece.Type, piece.Rotation, i];
+            Console.SetCursorPosition(x + piece.X*2 + cell.Item1*2, y + piece.Y + cell.Item2);
+            Console.Write(piece.Chars[i]);
+        }
+        Console.ResetColor();
         Console.SetCursorPosition(0, 0);
         Console.ForegroundColor = ConsoleColor.Yellow;
         Console.WriteLine($"({piecemiw}, {piecemaw})");
@@ -142,7 +142,15 @@ public class TetrisEngine {
     bool toRefresh;
     // Will implement once the pile is done
     bool CheckCollision() {
-        return true;
+        for (int i = 0; i < Pile.Count; i++) {
+            var block = Pile[i];
+            for (int j = 0; j < 4; j++) {
+                var cell = tetrominoes[piece.Type, piece.Rotation, j];
+                if (block.Item1 == cell.Item1 + piece.X && block.Item2 == cell.Item2 + piece.Y)
+                    return true;
+            }
+        }
+        return piecemah + piece.Y > Height;
     }
     public void Run() {
         while (true) {
@@ -164,7 +172,6 @@ public class TetrisEngine {
                     paused = false;
                     continue;
                 }
-
                 int dx = 0;
                 if (key.Key == ConsoleKey.Q && SelectPopup.Quick("Are you sure you want to quit?", ["Yes", "No"],
                         title: "Confirm", type: PopupType.Question) == "Yes") {
@@ -190,19 +197,23 @@ public class TetrisEngine {
                 } else if (key.Key == ConsoleKey.P) {
                     paused = true;
                 }
+                if (CheckCollision())
+                    piece.X -= dx;
             }
-
             if ((DateTime.Now - lastUpdate).TotalMilliseconds > 1000 && !paused) {
                 lastUpdate = DateTime.Now;
                 piece.Y++;
                 toRefresh = true;
-                if (piece.Y + piecemah == Height) {
-                    for (int i = 0; i < 4; i++) {
-                        var cell = tetrominoes[piece.Type, piece.Rotation, i];
-                        Pile.Add(new(piece.X + cell.Item1, piece.Y + cell.Item2, piece.Chars[i]));
-                    }
-                    NewPiece();
+            }
+            piece.Y++;
+            bool hit = CheckCollision();
+            piece.Y--;
+            if (hit) {
+                for (int i = 0; i < 4; i++) {
+                    var cell = tetrominoes[piece.Type, piece.Rotation, i];
+                    Pile.Add(new(piece.X + cell.Item1, piece.Y + cell.Item2, piece.Chars[i]));
                 }
+                NewPiece();
             }
 
             if (piecemiw + piece.X < 0)
