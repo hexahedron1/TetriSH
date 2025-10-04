@@ -107,11 +107,13 @@ public class TetrisEngine {
         Console.Write($"╚{new string('═', Width*2)}╝░");
         Console.SetCursorPosition(x, Console.WindowHeight/2 + Height/2 + 2);
         Console.Write(new string('░', Width*2+2));
+        Console.BackgroundColor = ConsoleColor.White;
+        Console.ForegroundColor = ConsoleColor.Black;
         foreach (var block in Pile) {
             Console.SetCursorPosition(x + block.Item1*2, y + block.Item2);
             Console.Write(block.Item3);
         }
-        Console.BackgroundColor = CheckCollision() ? ConsoleColor.Red : ConsoleColor.Blue;
+        Console.BackgroundColor = ConsoleColor.Cyan;
         Console.ForegroundColor = ConsoleColor.Black;
         for (int i = 0; i < 4; i++) {
             var cell = tetrominoes[piece.Type, piece.Rotation, i];
