@@ -155,68 +155,106 @@ public class TetrisEngine {
         return piecemah + piece.Y > Height;
     }
     public void Run() {
-        while (true) {
-            if (pW != Console.WindowWidth || pH != Console.WindowHeight)
-                toRefresh = true;
-            if (Console.WindowWidth < Width*2 + 2 || Console.WindowHeight < Height + 3) {
-                Console.Clear();
-                Popup.Quick(
-                    $"This terminal is too small (Minimum size: {Width * 2 + 2}x{Height + 3} characters). Please increase the size of your terminal and press any key to continue.", title: "Screen too small", type: PopupType.Error);
-                toRefresh = true;
-                continue;
-            }
-            if (toRefresh)
-                Refresh();
-            if (Console.KeyAvailable) {
-                var key = Console.ReadKey(true);
-                toRefresh = true;
-                if (paused) {
-                    paused = false;
+        try {
+            while (true) {
+                if (pW != Console.WindowWidth || pH != Console.WindowHeight)
+                    toRefresh = true;
+                if (Console.WindowWidth < Width * 2 + 2 || Console.WindowHeight < Height + 3) {
+                    Console.Clear();
+                    Popup.Quick(
+                        $"This terminal is too small (Minimum size: {Width * 2 + 2}x{Height + 3} characters). Please increase the size of your terminal and press any key to continue.",
+                        title: "Screen too small", type: PopupType.Error);
+                    toRefresh = true;
                     continue;
                 }
-                int dx = 0;
-                if (key.Key == ConsoleKey.Q && SelectPopup.Quick("Are you sure you want to quit?", ["Yes", "No"],
-                        title: "Confirm", type: PopupType.Question) == "Yes") {
-                    break;
-                } else if (key.Key == ConsoleKey.LeftArrow) {
-                    piece.X--;
-                    dx = -1;
-                } else if (key.Key == ConsoleKey.RightArrow) {
-                    piece.X++;
-                    dx = 1;
-                } else if (key.Key == ConsoleKey.DownArrow) {
+
+                if (toRefresh)
+                    Refresh();
+                if (Console.KeyAvailable) {
+                    var key = Console.ReadKey(true);
+                    toRefresh = true;
+                    if (paused) {
+                        paused = false;
+                        continue;
+                    }
+
+                    int dx = 0;
+                    if (key.Key == ConsoleKey.Q && SelectPopup.Quick("Are you sure you want to quit?", ["Yes", "No"],
+                            title: "Confirm", type: PopupType.Question) == "Yes") {
+                        break;
+                    } else if (key.Key == ConsoleKey.LeftArrow) {
+                        piece.X--;
+                        dx = -1;
+                    } else if (key.Key == ConsoleKey.RightArrow) {
+                        piece.X++;
+                        dx = 1;
+                    } else if (key.Key == ConsoleKey.DownArrow) {
+                        piece.Y++;
+                    } else if (key.Key == ConsoleKey.Z) {
+                        piece.Rotation--;
+                        if (piece.Rotation < 0)
+                            piece.Rotation = 3;
+                        RefreshPieceRange();
+                    } else if (key.Key == ConsoleKey.X) {
+                        piece.Rotation++;
+                        if (piece.Rotation >= 4)
+                            piece.Rotation = 0;
+                        RefreshPieceRange();
+                    } else if (key.Key == ConsoleKey.P) {
+                        paused = true;
+                    }
+
+                    if (CheckCollision())
+                        piece.X -= dx;
+                }
+
+                if ((DateTime.Now - lastUpdate).TotalMilliseconds > 1000 && !paused) {
+                    lastUpdate = DateTime.Now;
                     piece.Y++;
-                } else if (key.Key == ConsoleKey.Z) {
-                    piece.Rotation--;
-                    if (piece.Rotation < 0)
-                        piece.Rotation = 3;
-                    RefreshPieceRange();
-                } else if (key.Key == ConsoleKey.X) {
-                    piece.Rotation++;
-                    if (piece.Rotation >= 4)
-                        piece.Rotation = 0;
-                    RefreshPieceRange();
-                } else if (key.Key == ConsoleKey.P) {
-                    paused = true;
+                    toRefresh = true;
                 }
-                if (CheckCollision())
-                    piece.X -= dx;
-            }
-            if ((DateTime.Now - lastUpdate).TotalMilliseconds > 1000 && !paused) {
-                lastUpdate = DateTime.Now;
+
                 piece.Y++;
-                toRefresh = true;
-            }
-            piece.Y++;
-            bool hit = CheckCollision();
-            piece.Y--;
-            if (hit) {
-                for (int i = 0; i < 4; i++) {
-                    var cell = tetrominoes[piece.Type, piece.Rotation, i];
-                    Pile.Add(new(piece.X + cell.Item1, piece.Y + cell.Item2, piece.Chars[i]));
+                bool hit = CheckCollision();
+                piece.Y--;
+                if (hit) {
+                    for (int i = 0; i < 4; i++) {
+                        var cell = tetrominoes[piece.Type, piece.Rotation, i];
+                        Pile.Add(new(piece.X + cell.Item1, piece.Y + cell.Item2, piece.Chars[i]));
+                    }
+
+                    int[] fall = new int[Width];
+                    for (int y = 0; y <= Height; y++) {
+                        bool pass = true;
+                        int limx;
+                        for (limx = 0; limx < Width; limx++) {
+                            var block = GetBlock(limx, y);
+                            if (block == null) {
+                                pass = false;
+                                break;
+                            }
+
+                            if (block.Item3.Contains('␤')) break;
+                        }
+
+                        if (pass) {
+                            for (int x = 0; x < limx; x++) {
+                                var b = GetBlock(x, y)!;
+                                Pile.Remove(b);
+                            }
+
+                            for (int y2 = Height; y2 > y; y2--) {
+                                for (int x2 = 0; x2 < limx; x2++) {
+                                    var b = GetBlock(x2, y2)!;
+                                    Pile.Remove(b);
+                                    Pile.Add(new Tuple<int, int, string>(b.Item1, b.Item2 + 1, b.Item3));
+                                }
+                            }
+                        }
+                    }
+
+                    NewPiece();
                 }
-                NewPiece();
-            }
 
             if (piecemiw + piece.X < 0)
                 piece.X++;
@@ -230,6 +268,15 @@ public class TetrisEngine {
             
             pW = Console.WindowWidth;
             pH = Console.WindowHeight;
+        } catch (Exception e) {
+            if (SelectPopup.Quick($"{e.Message}\nDump the stack trace to console?", ["Yes", "No"], title: "Unrecoverable error",
+                    type: PopupType.Error) == "Yes") {
+                Console.WriteLine("== \e[1mStack trace\e[0m ==");
+                Console.WriteLine(e);
+                Console.WriteLine("\nPlease report this error in the github repository.");
+            }
+            Console.CursorVisible = true;
+            Environment.Exit(1);
         }
     }
 }
